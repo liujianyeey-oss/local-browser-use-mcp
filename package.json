@@ -1,0 +1,58 @@
+{
+  "name": "local-browser-use-mcp",
+  "version": "0.1.1",
+  "description": "Unofficial local stdio MCP bridge for an installed OpenAI Browser Runtime",
+  "type": "module",
+  "private": false,
+  "license": "MIT",
+  "author": "liujianyeey-oss (https://github.com/liujianyeey-oss)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/liujianyeey-oss/local-browser-use-mcp.git"
+  },
+  "homepage": "https://github.com/liujianyeey-oss/local-browser-use-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/liujianyeey-oss/local-browser-use-mcp/issues"
+  },
+  "bin": {
+    "local-browser-use-mcp": "bin/local-browser-use-mcp.mjs"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "scripts/",
+    "examples/",
+    "docs/README.zh-CN.md",
+    "skills/local-browser-use/SKILL.md",
+    "README.md",
+    "LICENSE",
+    "NOTICE",
+    "SECURITY.md"
+  ],
+  "scripts": {
+    "check": "node --check bin/local-browser-use-mcp.mjs && node --check src/backend-diagnostics.mjs && node --check src/core.mjs && node --check src/redaction.mjs && node --check src/server-instructions.mjs && node --check src/turn-metadata.mjs && node --check src/stdio-relay.mjs && node --check src/mcp-stdio-session.mjs && node --check scripts/probe-readonly-inventory.mjs && node --check scripts/probe-example-tab.mjs && node --check scripts/verify-package.mjs",
+    "test": "node --test test/*.test.mjs",
+    "test:upstream": "node --test test/upstream-skill.check.mjs",
+    "verify": "npm run check && npm test && node bin/local-browser-use-mcp.mjs doctor",
+    "verify:package": "node scripts/verify-package.mjs",
+    "smoke": "node scripts/probe-readonly-inventory.mjs",
+    "smoke:tab": "node scripts/probe-example-tab.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "os": [
+    "darwin"
+  ],
+  "keywords": [
+    "mcp",
+    "browser-automation",
+    "chrome",
+    "agent-cli",
+    "chatgpt",
+    "codex"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

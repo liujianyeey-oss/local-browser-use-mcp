@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "local-browser-use": {
+      "command": "/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node",
+      "args": [
+        "/ABSOLUTE/PATH/local-browser-use-mcp/bin/local-browser-use-mcp.mjs",
+        "serve"
+      ]
+    }
+  }
+}
