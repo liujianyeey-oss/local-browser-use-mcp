@@ -87,7 +87,8 @@ async function checkBackend(configPath) {
     ],
     timeoutMs: 40_000,
   });
-  const toolResult = result.responses.find((response) => response.id === 2)?.result;
+  const toolResponse = result.responses.find((response) => response.id === 2);
+  const toolResult = toolResponse?.result;
   const observation = parseObservation(toolResult);
   const browserCount = Number.isInteger(observation?.browserCount) ? observation.browserCount : 0;
   const online = result.spawnError == null && !result.timedOut && result.status === 0 &&
@@ -96,7 +97,7 @@ async function checkBackend(configPath) {
     online,
     error: online
       ? null
-      : classifyBackendFailure({result, toolResult, browserCount}),
+      : classifyBackendFailure({result, toolResult, toolResponse, browserCount}),
   };
 }
 
@@ -146,24 +147,16 @@ async function doctor(options) {
     version: loaded?.version ?? null,
     liveConfig: loaded?.configPath ?? null,
     ...checks,
-    error: configurationError == null ? null : redactError(configurationError),
+    error: configurationError == null ? null : redactError(configurationError, {home: ""}),
     backendError,
     backendErrorKind,
     backendErrorDetail,
   };
-  const redaction = {
+  const output = JSON.stringify(report, null, 2);
+  process.stdout.write(`${options["show-paths"] ? output : redactText(output, {
     home: os.homedir(),
-    paths: loaded ? [loaded.configPath] : [],
-  };
-    const safeReport = redactText(JSON.stringify(report, null, 2), {
-      home: os.homedir(),
-      paths: [
-        ...checks.browserRuntime ? [checks.browserRuntime] : [],
-        ...loaded?.configPath ? [loaded.configPath] : [],
-      ],
-    });
-    const output = safeReport;
-  process.stdout.write(`${options["show-paths"] ? output : redactText(output, redaction)}\n`);
+    paths: [checks.browserRuntime, loaded?.configPath].filter(Boolean),
+  })}\n`);
   const ready = runtimePresent && (!options.online || backendOnline === true);
   process.exitCode = ready ? 0 : 1;
 }

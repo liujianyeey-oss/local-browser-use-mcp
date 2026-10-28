@@ -30,13 +30,13 @@
     "SECURITY.md"
   ],
   "scripts": {
-    "check": "node --check bin/local-browser-use-mcp.mjs && node --check src/backend-diagnostics.mjs && node --check src/core.mjs && node --check src/redaction.mjs && node --check src/server-instructions.mjs && node --check src/turn-metadata.mjs && node --check src/stdio-relay.mjs && node --check src/mcp-stdio-session.mjs && node --check scripts/probe-readonly-inventory.mjs && node --check scripts/probe-example-tab.mjs && node --check scripts/verify-package.mjs",
-    "test": "node --test test/*.test.mjs",
-    "test:upstream": "node --test test/upstream-skill.check.mjs",
-    "verify": "npm run check && npm test && node bin/local-browser-use-mcp.mjs doctor",
+    "check": "node scripts/check.mjs",
+    "test": "node scripts/run-tests.mjs",
+    "verify": "npm run check && npm test && npm run verify:package",
     "verify:package": "node scripts/verify-package.mjs",
     "smoke": "node scripts/probe-readonly-inventory.mjs",
-    "smoke:tab": "node scripts/probe-example-tab.mjs"
+    "smoke:tab": "node scripts/probe-example-tab.mjs",
+    "prepublishOnly": "npm run verify"
   },
   "engines": {
     "node": ">=20"

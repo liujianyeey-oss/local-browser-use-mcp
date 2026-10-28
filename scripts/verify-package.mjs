@@ -8,10 +8,11 @@ import os from "node:os";
 import path from "node:path";
 import {promisify} from "node:util";
 import zlib from "node:zlib";
+import {fileURLToPath} from "node:url";
 import {runMcpSession} from "../src/mcp-stdio-session.mjs";
 
 const execFileAsync = promisify(execFile);
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 
 function walkFiles(directory) {
@@ -106,7 +107,7 @@ function assertNoSensitiveContent(packageDirectory, files) {
     os.homedir() + path.sep,
     path.resolve(os.homedir(), "..") + path.sep,
     path.resolve(os.tmpdir(), "..") + path.sep,
-  ];
+  ].filter((marker) => path.resolve(marker) !== path.parse(marker).root);
   for (const file of files) {
     const text = fs.readFileSync(path.join(packageDirectory, file), "utf8");
     for (const marker of markers) {

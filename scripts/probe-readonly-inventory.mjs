@@ -52,7 +52,8 @@ const result = await runMcpSession({
   ],
   timeoutMs: 45_000,
 });
-const toolResult = result.responses.find((response) => response.id === 2)?.result;
+const toolResponse = result.responses.find((response) => response.id === 2);
+const toolResult = toolResponse?.result;
 const observation = parseObservation(toolResult);
 const inventory = Array.isArray(observation?.browsers) ? observation : null;
 const succeeded = result.spawnError == null &&
@@ -83,7 +84,7 @@ const report = {
 };
 const failure = succeeded
   ? null
-  : classifyBackendFailure({result, toolResult, browserCount: inventory?.browsers.length ?? 0});
+  : classifyBackendFailure({result, toolResult, toolResponse, browserCount: inventory?.browsers.length ?? 0});
 if (failure != null) report.failure = failure;
 const safeReport = redactText(JSON.stringify(report, null, 2), {
   home: os.homedir(),

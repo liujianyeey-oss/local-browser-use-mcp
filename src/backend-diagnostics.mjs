@@ -20,7 +20,7 @@ export function parseObservation(toolResult) {
   return null;
 }
 
-export function classifyBackendFailure({result, toolResult, browserCount = 0}) {
+export function classifyBackendFailure({result, toolResult, toolResponse, browserCount = 0}) {
   if (result.spawnError != null) {
     return {kind: "spawn_error", detail: "the configured backend process could not start"};
   }
@@ -30,14 +30,12 @@ export function classifyBackendFailure({result, toolResult, browserCount = 0}) {
   if (result.responseParseErrors.length > 0) {
     return {kind: "protocol_error", detail: "the backend returned invalid JSON-RPC output"};
   }
+  if (toolResponse?.error != null) {
+    const code = typeof toolResponse.error.code === "number" ? ` (JSON-RPC ${toolResponse.error.code})` : "";
+    return {kind: "tool_error", detail: `the read-only tool call was rejected${code}`};
+  }
   if (toolResult == null) {
     return {kind: "protocol_error", detail: "the backend did not return the read-only tool result"};
-  }
-  if (toolResult.error != null) {
-    const code = typeof toolResult.error?.code === "number"
-      ? ` (JSON-RPC ${toolResult.error.code})`
-      : "";
-    return {kind: "tool_error", detail: `the read-only tool call was rejected${code}`};
   }
   if (toolResult.isError === true) {
     const text = textItems(toolResult).map((item) => item.text).join("\n");

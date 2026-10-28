@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
-import {once} from "node:events";
-import readline from "node:readline";
+import {jsonLines} from "./json-lines.mjs";
+import {createChildShutdown} from "./process-lifecycle.mjs";
 
 const writeQueues = new WeakMap();
 
@@ -13,7 +13,19 @@ function write(stream, text) {
   const previous = writeQueues.get(stream) ?? Promise.resolve();
   const next = previous.catch(() => {}).then(async () => {
     if (stream.destroyed || stream.writableEnded) throw epipe();
-    if (!stream.write(text)) await once(stream, "drain");
+    if (!stream.write(text)) await new Promise((resolve, reject) => {
+      const cleanup = () => {
+        stream.removeListener("drain", drained);
+        stream.removeListener("error", failed);
+        stream.removeListener("close", closed);
+      };
+      const drained = () => { cleanup(); resolve(); };
+      const failed = (error) => { cleanup(); reject(error); };
+      const closed = () => failed(epipe());
+      stream.once("drain", drained);
+      stream.once("error", failed);
+      stream.once("close", closed);
+    });
   });
   writeQueues.set(stream, next);
   return next;
@@ -38,9 +50,11 @@ export async function runMcpRelay({
   handleClient,
   handleServer,
   signalProcess = process,
+  shutdownGraceMs = 1000,
 }) {
-  const clientLines = readline.createInterface({input, crlfDelay: Infinity});
-  const serverLines = readline.createInterface({input: child.stdout, crlfDelay: Infinity});
+  const clientLines = jsonLines(input);
+  const serverLines = jsonLines(child.stdout);
+  const shutdown = createChildShutdown(child, {graceMs: shutdownGraceMs});
   const signals = ["SIGINT", "SIGTERM", "SIGHUP"];
   let failure = null;
   let outputLost = false;
@@ -50,10 +64,7 @@ export async function runMcpRelay({
   const stop = (error) => {
     failure ??= error;
     input.destroy();
-    clientLines.close();
-    if (child.exitCode == null && child.signalCode == null && !child.killed) {
-      child.kill("SIGTERM");
-    }
+    shutdown.terminate();
   };
   const onOutputError = (error) => {
     if (error?.code !== "EPIPE") {
@@ -62,10 +73,7 @@ export async function runMcpRelay({
     }
     outputLost = true;
     input.destroy();
-    clientLines.close();
-    if (child.exitCode == null && child.signalCode == null && !child.killed) {
-      child.kill("SIGTERM");
-    }
+    shutdown.terminate();
   };
   const onInputError = (error) => stop(error);
   const onChildInputError = (error) => {
@@ -80,7 +88,8 @@ export async function runMcpRelay({
     const handler = () => {
       if (receivedSignal != null) return;
       receivedSignal = signal;
-      if (child.exitCode == null && child.signalCode == null) child.kill(signal);
+      input.destroy();
+      shutdown.terminate(signal);
     };
     signalHandlers.set(signal, handler);
     signalProcess.on(signal, handler);
@@ -96,7 +105,6 @@ export async function runMcpRelay({
     child.once("close", (code, signal) => {
       exit = {code, signal};
       input.destroy();
-      clientLines.close();
       resolve();
     });
   });
@@ -126,6 +134,7 @@ export async function runMcpRelay({
         if (message != null) await write(child.stdin, `${JSON.stringify(message)}\n`);
       }
       if (!child.stdin.destroyed && !child.stdin.writableEnded) child.stdin.end();
+      shutdown.afterInputClosed();
     } catch (error) {
       if (error?.code === "EPIPE") {
         if (output.destroyed || outputLost) onOutputError(error);
@@ -176,7 +185,6 @@ export async function runMcpRelay({
     child.stdin.removeListener("error", onChildInputError);
     child.stdout.removeListener("error", onChildOutputError);
     child.removeListener("error", onChildError);
-    clientLines.close();
-    serverLines.close();
+    shutdown.dispose();
   }
 }

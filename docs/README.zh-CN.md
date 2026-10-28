@@ -2,10 +2,10 @@
 
 [![CI](https://github.com/liujianyeey-oss/local-browser-use-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/liujianyeey-oss/local-browser-use-mcp/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/local-browser-use-mcp)](https://www.npmjs.com/package/local-browser-use-mcp)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Node.js](https://img.shields.io/badge/node-%E2%89%A520-green)](package.json)
-[![Platform](https://img.shields.io/badge/platform-macOS-lightgrey)](package.json)
-[![Dependencies](https://img.shields.io/badge/dependencies-0-success)](package.json)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](../LICENSE)
+[![Node.js](https://img.shields.io/badge/node-%E2%89%A520-green)](../package.json)
+[![Platform](https://img.shields.io/badge/platform-macOS-lightgrey)](../package.json)
+[![Dependencies](https://img.shields.io/badge/dependencies-0-success)](../package.json)
 
 [English](../README.md)
 
@@ -44,13 +44,13 @@ local-browser-use-mcp doctor --online
 | Chrome 模式下，官方 ChatGPT Chrome 扩展已安装启用，`com.openai.codexextension` Native Messaging Host 已注册 | 否 |
 | 当前可连接的浏览器 backend | 否 |
 
-本包只包含 bridge、CLI、测试、文档和自研说明。
+本包只包含 bridge、CLI、验证脚本、文档和自研说明；回归测试保留在源码仓库。
 
 ## 兼容性
 
 | 环境 | 状态 | 说明 |
 | --- | --- | --- |
-| macOS + Node.js 20/22 | 支持 | CI matrix |
+| macOS + Node.js 20/22/24 | CI 目标 | 模拟 backend 矩阵，参见[兼容性记录](COMPATIBILITY.md) |
 | Chrome backend | 支持 | 使用官方扩展和 Native Host |
 | Edge backend | 实验性 | 依赖 Runtime 浏览器 inventory，本仓库未单独测试 |
 | IAB backend | 宿主提供时支持 | 可用性取决于 Agent 宿主 |
@@ -159,6 +159,18 @@ Agent 必须先读取返回的动态文档，再选择 Chrome 或 IAB backend。
 - 默认脱敏 home 与已知用户路径，`--show-paths` 是显式例外。
 
 详见 [SECURITY.md](../SECURITY.md)。
+
+代码强制 browser surface，并在客户端不支持 elicitation 时拒绝审批。首次调用、
+存储读取限制和模型层确认由 Agent instructions 约束，bridge 不逐条解析 JavaScript
+来执行操作授权。
+
+单条 JSONL 消息上限为 32 MiB；诊断会话最多保留 64 MiB / 1024 条响应及最后
+64 KiB stderr。输入关闭或请求退出后，backend 有 1 秒退出宽限期，随后发送
+SIGKILL。客户端应等待结果后再关闭输入。
+
+`npm run verify` 执行语法、回归及模拟 MCP E2E，不要求安装 Runtime；真实 Runtime
+集成仍仅支持 macOS，需另用 `doctor --online` 验证。参见[贡献指南](../CONTRIBUTING.md)、
+[发布流程](RELEASING.md)和[兼容性记录](COMPATIBILITY.md)。
 
 ## 卸载
 

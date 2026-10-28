@@ -22,7 +22,11 @@ When reporting, include:
 - sanitized logs with home and user paths removed;
 - minimal reproduction steps that do not expose private browser data.
 
-Repository metadata intentionally omits an invented security contact. A real maintainer contact must be added before the first public release.
+Private reporting availability has not been verified in this repository. If GitHub
+shows **Security → Report a vulnerability**, use that private form. If unavailable,
+do not publish vulnerability details. A public issue may request a private contact
+route without exploit or sensitive information. Maintainers must configure and
+verify a private reporting route before the next release.
 
 ## Threat model
 
@@ -51,6 +55,11 @@ Diagnostics and logs redact the user's home directory and known user paths by de
 The bridge does not sandbox Chrome, the ChatGPT/Codex desktop app, the Browser Runtime, the Chrome extension, the Native Messaging Host, or the operating system. If any of those components is compromised, this bridge cannot restore confidentiality or integrity. Users must obtain those components from their official sources and keep them updated.
 
 ## Security boundaries
+
+Code enforces the browser-only environment, declines unsupported elicitation and
+sanitizes diagnostics. First-call behavior, storage restrictions, untrusted-content
+handling and model-level confirmation are Agent instructions. The bridge does not
+parse JavaScript to authorize individual browser operations.
 
 The bridge enforces or documents these boundaries:
 

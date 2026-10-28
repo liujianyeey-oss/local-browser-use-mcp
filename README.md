@@ -44,13 +44,13 @@ Two successful checks mean the bridge found a compatible local Runtime and can m
 | ChatGPT Chrome extension and registered `com.openai.codexextension` Native Messaging Host for Chrome mode | No |
 | A currently connected browser backend | No |
 
-The package contains only the bridge, its CLI, tests, documentation, and self-authored guidance. It does not install, modify, or distribute any official component.
+The package contains only the bridge, its CLI, verification scripts, documentation, and self-authored guidance. Regression tests live in the repository. It does not install, modify, or distribute any official component.
 
 ## Compatibility
 
 | Environment | Status | Notes |
 | --- | --- | --- |
-| macOS + Node.js 20/22 | Supported | CI matrix |
+| macOS + Node.js 20/22/24 | CI target | Fake-backend matrix; see [compatibility evidence](docs/COMPATIBILITY.md) |
 | Chrome backend | Supported | Uses the official extension and Native Host |
 | Edge backend | Experimental | Follows the Runtime's browser inventory; not separately tested in this repository |
 | In-app browser backend | Supported when the host provides it | Availability depends on the Agent host |
@@ -195,6 +195,20 @@ If `backendErrorKind=runtime_kernel_failed` and the detail says sandbox creation
 - Diagnostics redact home directories and known user paths by default; `--show-paths` is an explicit opt-in.
 
 See [SECURITY.md](SECURITY.md) for the threat model and supported versions.
+
+Code enforces the browser-only environment and unsupported-elicitation rejection.
+Storage restrictions, first-call behavior and model-level confirmation are Agent
+instructions, not a JavaScript authorization filter.
+
+Messages are limited to 32 MiB each. Diagnostic sessions retain at most 64 MiB /
+1024 responses and the last 64 KiB of stderr. After input closes or shutdown is
+requested, a backend has one second to exit before SIGKILL. Clients should wait
+for results before closing input to avoid interrupting pending responses.
+
+See [contributing](CONTRIBUTING.md), [release guidance](docs/RELEASING.md) and
+[compatibility evidence](docs/COMPATIBILITY.md). `npm run verify` checks syntax,
+regressions and packaged fake-backend E2E without a desktop Runtime or browser.
+Real Runtime integration remains macOS-only and requires `doctor --online`.
 
 ## Compatibility policy
 
